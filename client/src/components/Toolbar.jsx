@@ -10,6 +10,7 @@ import { shapeData } from '../store/atoms/rectangle'
 
 const Toolbar = () => {
   const[shape,setShape]= useRecoilState(shapeData)
+  const[text,setText]= useState(" ")
   
   return (
     <div >
@@ -21,6 +22,10 @@ const Toolbar = () => {
             <img src={arrow} onClick={()=>setShape("arrow")} className='size-5'  />
             <img src={eraser} onClick={()=>setShape("erase")} className='size-5'  />
         </div> 
+        <div>
+          {/* <input type='text' value={text} onChange={(event)=>setText(event.target.value)}></input>
+          <p>{text}</p> */}
+        </div>
 
       </div>
       

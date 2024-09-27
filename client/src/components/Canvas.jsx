@@ -1,17 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { shapeData } from '../store/atoms/rectangle'
 import { useRecoilState } from 'recoil'
+import rough from "roughjs"
 
 const Canvas = () => {
   const canvasref= useRef(null)
   const contextref= useRef(null)
-  
+  const circleX= useRef(null)
+  const circleY= useRef(null)
   const startX= useRef(null)
   const startY=useRef(null)
+  
   const [drawing,setdrawing]= useState(false);
   
+  
 
-  const[shape,setShape]= useRecoilState(shapeData)
+  const[shape]= useRecoilState(shapeData)
   
 
   useEffect(()=>{
@@ -19,29 +23,29 @@ const Canvas = () => {
     const canvaspoint= canvas.getBoundingClientRect()
      canvas.width= canvaspoint.width
      canvas.height= canvaspoint.height
-    console.log(canvaspoint)
+     
+     //rcref.current= rough.canvas(canvas)
     const context= canvas.getContext('2d')
-    context.lineWidth=5
+    context.lineWidth=3
     context.lineCap= "round"
     context.strokeStyle= "black"
+    
     contextref.current= context
   },[])
 
   const startDrawing=({nativeEvent})=>{
-     startX.current= nativeEvent.clientX
-     startY.current= nativeEvent.clientY
+     startX.current= nativeEvent.offsetX
+     startY.current= nativeEvent.offsetY
     //  console.log(nativeEvent)
      setdrawing(true)
+     
+     contextref.current.moveTo(startX.current,startY.current)
+     //contextref.current.lineTo(startX.current,startY.current)
      contextref.current.beginPath()
-     contextref.current.moveTo(startX,startY)
-     contextref.current.lineTo(startX,startY)
-     contextref.current.stroke()
-     console.log("CLIENT",startX,startY)
-     console.log(nativeEvent.offsetX,nativeEvent.offsetY)
+      contextref.current.stroke()
+    
 
      nativeEvent.preventDefault()
-
-
   }
 
   const drawevents=({nativeEvent})=>{
@@ -49,15 +53,49 @@ const Canvas = () => {
       return
     }
     if(shape=="freehand"){
-      const currentX= nativeEvent.clientX;
-    const currentY= nativeEvent.clientY
+      
+      const currentX= nativeEvent.offsetX;
+    const currentY= nativeEvent.offsetY
     contextref.current.lineTo(currentX,currentY)
+    
     }
+    // if(shape=="circle"){
+    //   circleX.current= nativeEvent.offsetX
+    //   circleY.current=nativeEvent.offsetY
+      
+    //   const radius= Math.sqrt(Math.pow(circleX.current-startX.current,2)+Math.pow(circleX.current-startY.current,2))
+    //   //const radius= Math.sqrt(Math.pow(circleX.current-startX.current,2)+Math.pow(circleY.current-startY.current,2))
+      
+    //   contextref.current.arc(startX.current,startY.current,radius,0,2*Math.PI)
+      
+      
+
+    // }
     contextref.current.stroke()
+    
+    
+    
     
   }
 
-  const stopdrawing=()=>{
+  const stopdrawing=({nativeEvent})=>{
+    if(shape=="circle"){
+      //contextref.current.clearRect(0,0,canvasref.current.width,canvasref.current.height)
+      circleX.current= nativeEvent.offsetX
+      circleY.current=nativeEvent.offsetY
+      const radius= Math.sqrt(Math.pow(circleX.current-startX.current,2)+Math.pow(circleY.current-startY.current,2))
+      contextref.current.globalCompositeOperation= "source-over"
+      contextref.current.arc(startX.current,startY.current,radius,0,2*Math.PI)
+      contextref.current.stroke()
+      // contextref.current.shadowOffsetX=-10
+      
+    
+     
+   }
+    contextref.current.closePath()
+    setdrawing(false)
+  }
+  const leavedrawing=()=>{
     contextref.current.closePath()
     setdrawing(false)
   }
@@ -68,7 +106,7 @@ const Canvas = () => {
 
   return (
     <div className={`h-[calc(100%-54px)]`} >
-        <canvas ref={canvasref} className='w-full h-full border' onPointerDown={startDrawing} onPointerMove={drawevents} onPointerUp={stopdrawing} onPointerLeave={stopdrawing}>
+        <canvas ref={canvasref} className='w-full h-full border' onPointerDown={startDrawing} onPointerMove={drawevents} onPointerUp={stopdrawing} onPointerLeave={leavedrawing}>
             
 
         </canvas>
