@@ -8,7 +8,7 @@ import  {RecoilRoot}  from 'recoil'
 function App () {
  return (
   <RecoilRoot>
-    <div className='h-screen'>
+    <div className='h-screen w-screen'>
       <Toolbar />
       <Canvas />
     
