@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { shapeData } from '../store/atoms/rectangle'
 import { useRecoilState } from 'recoil'
 import rough from "roughjs"
+
+
 
 const Canvas = () => {
   const canvasref= useRef(null)
@@ -14,7 +16,7 @@ const Canvas = () => {
   const mouseY=useRef(null)
   
   const [drawing,setdrawing]= useState(false);
-  const [erasing,seterasing]= useState(false)
+  const [erasing,seterasing]= useState(false);
   const [shapes,setShapes]= useState([])
   const [linepath,setlinepath]= useState()
   const[shape]= useRecoilState(shapeData)
@@ -33,8 +35,10 @@ const Canvas = () => {
     roughj.current= rough.canvas(canvas)
     
     const resizecanvas=()=>{
-      canvas.width= window.innerWidth
-      canvas.height= window.innerHeight-54
+       const ratio = window.devicePixelRatio || 1;
+       canvas.width = window.innerWidth * ratio;
+       canvas.height = window.innerHeight * ratio;
+        context.scale(ratio, ratio);
       context.lineWidth=2
       context.lineCap= "round"
       context.strokeStyle= "black"
@@ -51,9 +55,9 @@ const Canvas = () => {
     }
  //requestAnimationFrame(rendercanvas)
 
-  },[shapes,linepath])
+  },[shapes])
 
-  const redrawcanvas=()=>{
+  const redrawcanvas= useCallback(()=>{
     const canvas= canvasref.current
     const context= contextref.current
     const canvaspoint= canvas.getBoundingClientRect()
@@ -72,14 +76,15 @@ const Canvas = () => {
     if(linepath){
       rendering(linepath)
     }
-  }
+  },[shapes,linepath])
 
   
 
-  const startDrawing=({nativeEvent})=>{
+  const startDrawing=(event)=>{
+    event.preventDefault()
     setdrawing(true)
-      startX.current= nativeEvent.offsetX
-      startY.current= nativeEvent.offsetY
+      startX.current= event.nativeEvent.offsetX
+      startY.current= event.nativeEvent.offsetY
 
       if(shape=="freehand"){
         pointsRef.current=[{x:startX.current,y:startY.current}]
@@ -110,6 +115,10 @@ const Canvas = () => {
   }
 
   //tracking mouse points
+
+  const draw = ({ nativeEvent }) => {
+    requestAnimationFrame(() => drawevents({ nativeEvent }));
+  };
 
   const drawevents=({nativeEvent})=>{
     if(!drawing){
@@ -151,6 +160,7 @@ const Canvas = () => {
     
     if(linepath && drawing){
       setShapes(prevshapes=>([...prevshapes,linepath]))
+      console.log(shapes)
       setlinepath(null)
     }
     if((drawing&& pointsRef)&& shape=="freehand"){
@@ -165,6 +175,7 @@ const Canvas = () => {
       seterasing(false)
     }
     setdrawing(false)
+    
     
   }
   //leave canvas
@@ -217,19 +228,11 @@ const Canvas = () => {
  
   }
 
-  // const addtext=({nativeEvent})=>{
-  //   const x= nativeEvent.offsetX
-  //   const y= nativeEvent.offsetY
-
-  //   return(
-  //    <input type='text' />
-  //   )
-
-  // }
+  
  
   return (
-    <div className={`h-[calc(100%-54px)]`} >
-        <canvas ref={canvasref} className='w-full h-full border bg-white' onPointerDown={startDrawing} onPointerMove={drawevents} onPointerUp={stopdrawing} onPointerLeave={leavedrawing} >
+    <div className={`canvas-container w-screen h-[calc(100%-54px)]`}>
+        <canvas className='w-full h-full border bg-white'ref={canvasref} onMouseDown={startDrawing} onTouchStart={startDrawing}  onTouchMove={draw} onMouseMove={draw} onTouchEnd={stopdrawing} onMouseUp={stopdrawing} onPointerLeave={leavedrawing} >
             
 
         </canvas>
@@ -238,3 +241,5 @@ const Canvas = () => {
 }
 
 export default Canvas
+
+
